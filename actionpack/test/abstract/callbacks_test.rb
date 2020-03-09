@@ -158,6 +158,56 @@ module AbstractController
       end
     end
 
+    class CallbacksWithReusedConditions < ControllerWithCallbacks
+      def index
+        self.response_body = @list.join(", ")
+      end
+
+      def public_data
+        @authenticated = "false"
+        self.response_body = @authenticated
+      end
+
+      private
+      def list
+        @list = ["Hello", "World"]
+      end
+
+      def authenticate
+        @list ||= []
+        @authenticated = "true"
+      end
+    end
+
+    class TestCallbacksWithReusedConditions < ActiveSupport::TestCase
+      def setup
+        @controller = CallbacksWithReusedConditions.new
+      end
+
+      def define_callbacks
+        options = {only: :index}
+        CallbacksWithReusedConditions.before_action :list, options
+        CallbacksWithReusedConditions.before_action :authenticate, options
+      end
+
+      test "callbacks can be defined with reused conditions" do
+        define_callbacks
+      end
+
+      test "when :only is specified, both actions triggered on that action" do
+        define_callbacks
+        @controller.process(:index)
+        assert_equal "Hello, World", @controller.response_body
+        assert_equal "true", @controller.instance_variable_get("@authenticated")
+      end
+
+      test "when :only is specified, both actions are not triggered on other actions" do
+        define_callbacks
+        @controller.process(:public_data)
+        assert_equal "false", @controller.response_body
+      end
+    end
+
     class CallbacksWithArrayConditions < ControllerWithCallbacks
       before_action :list, only: [:index, :listy]
       before_action :authenticate, except: [:index, :listy]
