@@ -364,7 +364,7 @@ module ActiveSupport
               MSG
             end
 
-            conditionals.freeze
+            conditionals
           end
 
           def compute_identifier(filter)
