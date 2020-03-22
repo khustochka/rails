@@ -90,10 +90,11 @@ module AbstractController
       # * <tt>options</tt>  - A hash of options to be used when adding the callback.
       def _insert_callbacks(callbacks, block = nil)
         options = callbacks.extract_options!
-        _normalize_callback_options(options)
+        options_copy = options.deep_dup
+        _normalize_callback_options(options_copy)
         callbacks.push(block) if block
         callbacks.each do |callback|
-          yield callback, options
+          yield callback, options_copy
         end
       end
 
